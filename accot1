@@ -35,10 +35,16 @@ For j = LBound(Keywords) To UBound(Keywords)
        InStr(1, ws.Cells(i, 5).Value, Keywords(j), vbTextCompare) > 0 Or _
        InStr(1, ws.Cells(i, 6).Value, Keywords(j), vbTextCompare) > 0 Then
 
-        'Additional verification to avoid Spotify entries
-        If InStr(1, ws.Cells(i, 4).Value, "Spotify", vbTextCompare) = 0 And _
-           InStr(1, ws.Cells(i, 5).Value, "Spotify", vbTextCompare) = 0 And _
-           InStr(1, ws.Cells(i, 6).Value, "Spotify", vbTextCompare) = 0 Then
+        'Additional verification to avoid Spotify and rahakoguja entries
+        If (InStr(1, ws.Cells(i, 4).Value, "Spotify", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 5).Value, "Spotify", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 6).Value, "Spotify", vbTextCompare) = 0) And _
+   (InStr(1, ws.Cells(i, 4).Value, "rahakoguja", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 5).Value, "rahakoguja", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 6).Value, "rahakoguja", vbTextCompare) = 0) And _
+   (InStr(1, ws.Cells(i, 4).Value, "Stockholm", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 5).Value, "Stockholm", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 6).Value, "Stockholm", vbTextCompare) = 0) Then
 
             'Check if value in column A is negative
             If ws.Cells(i, 1).Value < 0 Then
@@ -84,17 +90,23 @@ With ThisWorkbook.Sheets("Sheet2")
     
     'Insert 2 rows at the top
     .Rows("1:2").Insert Shift:=xlDown, CopyOrigin:=xlFormatFromLeftOrAbove
+    
+    'Place the total income message in the first row
+.Cells(1, 1).Value = "Income 4 month avg: " & Format(Abs(fourMonthIncomeAvg), "0.00") & " eur (Total " & Format(Abs(totalIncome), "0.00") & ")"
+    
+    'Place the message in the second row
+.Cells(2, 1).Value = "Obligation 4 month avg: " & Format(Abs(fourMonthAvg), "0.00") & " eur (Total " & Format(Abs(SumVals), "0.00") & ")"
 
-    'Place the message in the first row
-    .Cells(1, 1).Value = "Obligations sum total of " & Format(Abs(SumVals), "0.00") & " eur, 4 month average obligations: " & Format(Abs(fourMonthAvg), "0.00") & " eur."
 
-    'Place the total income message in the second row
-    .Cells(2, 1).Value = "Total 4 month income " & Format(Abs(totalIncome), "0.00") & " and 4 month average " & Format(Abs(fourMonthIncomeAvg), "0.00") & " eur."
+
 
 End With
 
 'Sort the obligations and remove columns G and J values
 SortAndRemoveColumns
+
+'Activate Sheet2
+ThisWorkbook.Sheets("Sheet2").Activate
 
 End Sub
 
@@ -167,3 +179,4 @@ Sub SortAndRemoveColumns()
     ws2.Columns("J:J").ClearContents
 
 End Sub
+
