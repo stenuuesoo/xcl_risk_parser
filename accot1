@@ -1,0 +1,169 @@
+Sub FindAndSumValues()
+
+    Dim ws As Worksheet, ws2 As Worksheet
+    Dim i As Long, j As Long, lastRow As Long, obligationCount As Long
+    Dim SumVals As Double
+    Dim Keywords() As Variant
+    Dim foundCreditors As Collection
+    
+    'Define which worksheet to work on (e.g., "Sheet1")
+    Set ws = ThisWorkbook.Sheets("Sheet1")
+    Set ws2 = ThisWorkbook.Sheets("Sheet2")
+    ws2.Cells.ClearContents
+    Set foundCreditors = New Collection
+    
+    'Define the keywords list
+    Keywords = Array("esto as", "Ferratum", "Monefit", "LHV finance", "Holm", "Inbank", "Bondora", "PRIMERO FINANCE OÜ", "omaraha", "creditea", _
+                     "ipf digital", "tf bank", "svea", "liising", "TKM finants AS", "hyba", "intressimakse", "coop finants", _
+                     "Multitude Bank", "põhiosa", "ühisraha", "placet group", "intress", "laen", "BB finance", _
+                     "moneyzen", "bigbank", "creditstar", "smsraha", "luminor liising", "swedbank liising", "rahapoe")
+    
+    'Initialize sum and obligation count to 0
+    SumVals = 0
+    obligationCount = 0
+    
+    'Loop through the first 900 rows
+    For i = 1 To 900
+        Dim isObligation As Boolean
+        isObligation = False
+        
+       'Loop through each keyword in the list
+For j = LBound(Keywords) To UBound(Keywords)
+    
+    'Check columns D, E, F for the current keyword
+    If InStr(1, ws.Cells(i, 4).Value, Keywords(j), vbTextCompare) > 0 Or _
+       InStr(1, ws.Cells(i, 5).Value, Keywords(j), vbTextCompare) > 0 Or _
+       InStr(1, ws.Cells(i, 6).Value, Keywords(j), vbTextCompare) > 0 Then
+
+        'Additional verification to avoid Spotify entries
+        If InStr(1, ws.Cells(i, 4).Value, "Spotify", vbTextCompare) = 0 And _
+           InStr(1, ws.Cells(i, 5).Value, "Spotify", vbTextCompare) = 0 And _
+           InStr(1, ws.Cells(i, 6).Value, "Spotify", vbTextCompare) = 0 Then
+
+            'Check if value in column A is negative
+            If ws.Cells(i, 1).Value < 0 Then
+                'Add the value from column A of the same row to the sum
+                SumVals = SumVals + ws.Cells(i, 1).Value
+                'Increase the obligation count
+                obligationCount = obligationCount + 1
+                
+                'Add creditor to the unique list if not already added
+                On Error Resume Next
+                foundCreditors.Add Keywords(j), CStr(Keywords(j))
+                On Error GoTo 0
+                
+                isObligation = True
+                Exit For 'Exit the keyword loop if one is found in this row
+            End If 'End If for negative value check
+
+        End If 'End If for Spotify verification
+
+    End If 'End If for keyword check
+
+Next j 'This Next corresponds to For j = LBound(Keywords) To UBound(Keywords)
+
+'Copy the entire row to the next available line in Sheet2
+        If isObligation Or ws.Cells(i, 2).Value = "INCOME" Then
+            lastRow = ws2.Cells(ws2.Rows.Count, "A").End(xlUp).Row + 1
+            ws.Rows(i).Copy ws2.Rows(lastRow)
+        End If
+    Next i
+    
+    'Calculate 4 month average
+    Dim fourMonthAvg As Double
+    fourMonthAvg = SumVals / 4
+
+    'Calculate total income and 4 month average
+    Dim totalIncome As Double
+    Dim fourMonthIncomeAvg As Double
+    totalIncome = CalculateIncome(ws)
+    fourMonthIncomeAvg = totalIncome / 4
+
+   'Place the results in Sheet2
+With ThisWorkbook.Sheets("Sheet2")
+    
+    'Insert 2 rows at the top
+    .Rows("1:2").Insert Shift:=xlDown, CopyOrigin:=xlFormatFromLeftOrAbove
+
+    'Place the message in the first row
+    .Cells(1, 1).Value = "Obligations sum total of " & Format(Abs(SumVals), "0.00") & " eur, 4 month average obligations: " & Format(Abs(fourMonthAvg), "0.00") & " eur."
+
+    'Place the total income message in the second row
+    .Cells(2, 1).Value = "Total 4 month income " & Format(Abs(totalIncome), "0.00") & " and 4 month average " & Format(Abs(fourMonthIncomeAvg), "0.00") & " eur."
+
+End With
+
+'Sort the obligations and remove columns G and J values
+SortAndRemoveColumns
+
+End Sub
+
+Function CalculateIncome(ws As Worksheet) As Double
+    Dim lastRow As Long
+    Dim sumIncome As Double
+    'Find the last row in column B
+    lastRow = ws.Cells(ws.Rows.Count, 2).End(xlUp).Row
+    'Loop through each row in column B
+    For i = 1 To lastRow
+        If ws.Cells(i, 2).Value = "INCOME" Then
+            sumIncome = sumIncome + ws.Cells(i, 1).Value 'Assuming the values to sum up are in Column A
+        End If
+    Next i
+    
+    CalculateIncome = sumIncome
+End Function
+
+Sub SortAndRemoveColumns()
+
+    Dim ws2 As Worksheet
+    Dim lastRow As Long, startRow As Long, endRow As Long
+    Dim cell As Range, sortRange As Range
+    
+    Set ws2 = ThisWorkbook.Sheets("Sheet2")
+
+    'Determine the last row in Sheet2
+    lastRow = ws2.Cells(ws2.Rows.Count, 1).End(xlUp).Row
+    
+    'Find the first row with negative sums and not "INCOME" after the headers.
+    For Each cell In ws2.Range("A3:A" & lastRow)
+        If cell.Value < 0 And ws2.Cells(cell.Row, 2).Value <> "INCOME" Then
+            startRow = cell.Row
+            Exit For
+        End If
+    Next cell
+    
+    'Find the last row with negative sums and not "INCOME".
+    For Each cell In ws2.Range("A" & lastRow & ":A3").Cells
+        If cell.Value < 0 And ws2.Cells(cell.Row, 2).Value <> "INCOME" Then
+            endRow = cell.Row
+            Exit For
+        End If
+    Next cell
+    
+    'If both startRow and endRow are initialized, set the sort range
+    If startRow > 0 And endRow > 0 Then
+        Set sortRange = ws2.Range("A" & startRow & ":Z" & endRow)
+    End If
+
+    'Sort by Date within the determined range (column C)
+    If Not sortRange Is Nothing Then
+        With ws2.Sort
+            .SortFields.Clear
+            .SortFields.Add Key:=Range("C" & startRow & ":C" & endRow), _
+                            SortOn:=xlSortOnValues, _
+                            Order:=xlDescending, _
+                            DataOption:=xlSortNormal
+            .SetRange sortRange
+            .Header = xlNo
+            .Orientation = xlTopToBottom
+            .SortMethod = xlPinYin
+            .Apply
+        End With
+    End If
+    
+    'Remove Column G, I, and J values
+    ws2.Columns("G:G").ClearContents
+    ws2.Columns("I:I").ClearContents
+    ws2.Columns("J:J").ClearContents
+
+End Sub
