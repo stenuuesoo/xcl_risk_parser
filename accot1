@@ -17,7 +17,9 @@ Sub FindAndSumValues()
                      "ipf digital", "tf bank", "AS ESTO", "svea", "liising", "TKM finants AS", "osamakse", "Credit repayment", "hyba", "intressimakse", "Täisteenusliisingu AS", "coop finants", _
                      "Multitude Bank", "põhiosa", "ühisraha", "placet group", "intress", "laen", "BB finance", _
                      "moneyzen", "bigbank", "creditstar", "smsraha", "luminor liising", "swedbank liising", "rahapoe", _
-                     "Julianus Inkasso OÜ", "Capital Inkasso OÜ", "ITM Inkasso OÜ", "Eesti inkasso OÜ", "CKE Inkasso OÜ", "OK INCURE OÜ")
+                     "Julianus Inkasso OÜ", "Capital Inkasso OÜ", "ITM Inkasso OÜ", "Eesti inkasso OÜ", "CKE Inkasso OÜ", "OK INCURE OÜ", _
+                     "coop pank", "tfbank", "holm bank as", "nbank finance", "multitude bank", "tallinna hoiu-laenuühistu", _
+                     "autopay", "fjord bank", "credit.ee", "www.svea.com", "credit24", "credit invest", "lhv finance", "mogo", "omega laen")
                      
     'Initialize sum and obligation count to 0
     SumVals = 0
@@ -46,6 +48,9 @@ For j = LBound(Keywords) To UBound(Keywords)
    (InStr(1, ws.Cells(i, 4).Value, "Stockholm", vbTextCompare) = 0 And _
     InStr(1, ws.Cells(i, 5).Value, "Stockholm", vbTextCompare) = 0 And _
     InStr(1, ws.Cells(i, 6).Value, "Stockholm", vbTextCompare) = 0) And _
+    (InStr(1, ws.Cells(i, 4).Value, "Kindlustusmakse", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 5).Value, "Kindlustusmakse", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 6).Value, "Kindlustusmakse", vbTextCompare) = 0) And _
     (InStr(1, ws.Cells(i, 4).Value, "Kreenholm", vbTextCompare) = 0 And _
     InStr(1, ws.Cells(i, 5).Value, "Kreenholm", vbTextCompare) = 0 And _
     InStr(1, ws.Cells(i, 6).Value, "Kreenholm", vbTextCompare) = 0) And _
