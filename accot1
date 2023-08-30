@@ -13,17 +13,18 @@ Sub FindAndSumValues()
     Set foundCreditors = New Collection
     
     'Define the keywords list
-    Keywords = Array("esto as", "Ferratum", "Monefit", "LHV finance", "Holm", "Inbank", "Bondora", "PRIMERO FINANCE OÜ", "omaraha", "creditea", _
-                     "ipf digital", "tf bank", "svea", "liising", "TKM finants AS", "hyba", "intressimakse", "coop finants", _
+    Keywords = Array("esto as", "Ferratum", "Monefit", "LHV finance", "Holm bank", "Inbank", "Bondora", "PRIMERO FINANCE OÜ", "omaraha", "creditea", _
+                     "ipf digital", "tf bank", "AS ESTO", "svea", "liising", "TKM finants AS", "osamakse", "Credit repayment", "hyba", "intressimakse", "Täisteenusliisingu AS", "coop finants", _
                      "Multitude Bank", "põhiosa", "ühisraha", "placet group", "intress", "laen", "BB finance", _
-                     "moneyzen", "bigbank", "creditstar", "smsraha", "luminor liising", "swedbank liising", "rahapoe")
-    
+                     "moneyzen", "bigbank", "creditstar", "smsraha", "luminor liising", "swedbank liising", "rahapoe", _
+                     "Julianus Inkasso OÜ", "Capital Inkasso OÜ", "ITM Inkasso OÜ", "Eesti inkasso OÜ", "CKE Inkasso OÜ", "OK INCURE OÜ")
+                     
     'Initialize sum and obligation count to 0
     SumVals = 0
     obligationCount = 0
     
-    'Loop through the first 900 rows
-    For i = 1 To 900
+    'Loop through the first 5000 rows
+    For i = 1 To 5000
         Dim isObligation As Boolean
         isObligation = False
         
@@ -44,7 +45,18 @@ For j = LBound(Keywords) To UBound(Keywords)
     InStr(1, ws.Cells(i, 6).Value, "rahakoguja", vbTextCompare) = 0) And _
    (InStr(1, ws.Cells(i, 4).Value, "Stockholm", vbTextCompare) = 0 And _
     InStr(1, ws.Cells(i, 5).Value, "Stockholm", vbTextCompare) = 0 And _
-    InStr(1, ws.Cells(i, 6).Value, "Stockholm", vbTextCompare) = 0) Then
+    InStr(1, ws.Cells(i, 6).Value, "Stockholm", vbTextCompare) = 0) And _
+    (InStr(1, ws.Cells(i, 4).Value, "Kreenholm", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 5).Value, "Kreenholm", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 6).Value, "Kreenholm", vbTextCompare) = 0) And _
+    InStr(1, ws.Cells(i, 8).Value, "rahandusministeerium", vbTextCompare) = 0 And _
+    (InStr(1, ws.Cells(i, 4).Value, "tulumaks", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 5).Value, "tulumaks", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 6).Value, "tulumaks", vbTextCompare) = 0) And _
+    (InStr(1, ws.Cells(i, 4).Value, "laenukaitse", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 5).Value, "laenukaitse", vbTextCompare) = 0 And _
+    InStr(1, ws.Cells(i, 6).Value, "laenukaitse", vbTextCompare) = 0) Then '
+    
 
             'Check if value in column A is negative
             If ws.Cells(i, 1).Value < 0 Then
@@ -69,10 +81,10 @@ For j = LBound(Keywords) To UBound(Keywords)
 Next j 'This Next corresponds to For j = LBound(Keywords) To UBound(Keywords)
 
 'Copy the entire row to the next available line in Sheet2
-        If isObligation Or ws.Cells(i, 2).Value = "INCOME" Then
-            lastRow = ws2.Cells(ws2.Rows.Count, "A").End(xlUp).Row + 1
-            ws.Rows(i).Copy ws2.Rows(lastRow)
-        End If
+       If isObligation Or ws.Cells(i, 2).Value = "INCOME" Or ws.Cells(i, 2).Value = "RECEIVED_CREDIT" Then
+    lastRow = ws2.Cells(ws2.Rows.Count, "A").End(xlUp).Row + 1
+    ws.Rows(i).Copy ws2.Rows(lastRow)
+End If
     Next i
     
     'Calculate 4 month average
@@ -89,7 +101,9 @@ Next j 'This Next corresponds to For j = LBound(Keywords) To UBound(Keywords)
 With ThisWorkbook.Sheets("Sheet2")
     
     'Insert 2 rows at the top
-    .Rows("1:2").Insert Shift:=xlDown, CopyOrigin:=xlFormatFromLeftOrAbove
+    .Rows("1:5").Insert Shift:=xlDown, CopyOrigin:=xlFormatFromLeftOrAbove
+    
+    
     
     'Place the total income message in the first row
 .Cells(1, 1).Value = "Income 4 month avg: " & Format(Abs(fourMonthIncomeAvg), "0.00") & " eur (Total " & Format(Abs(totalIncome), "0.00") & ")"
@@ -97,13 +111,30 @@ With ThisWorkbook.Sheets("Sheet2")
     'Place the message in the second row
 .Cells(2, 1).Value = "Obligation 4 month avg: " & Format(Abs(fourMonthAvg), "0.00") & " eur (Total " & Format(Abs(SumVals), "0.00") & ")"
 
+'Get the sum of RECEIVED_CREDIT from the worksheet
+Dim totalReceivedCredit As Double
+Dim fourMonthCreditAvg As Double
+totalReceivedCredit = CalculateReceivedCredit(ws)
+fourMonthCreditAvg = totalReceivedCredit / 4
 
+.Cells(3, 1).Value = "Total credit issued in last 4 months: " & Format(Abs(totalReceivedCredit), "0.00")
+
+Dim DebtToIncomeRatio As Double
+DebtToIncomeRatio = SumVals / totalIncome
+
+'to do, add lender count '
+
+.Cells(4, 1).Value = "Unique creditor count: todo & debt to income ratio: " & Format(Abs(DebtToIncomeRatio), "0.00")
 
 
 End With
 
 'Sort the obligations and remove columns G and J values
 SortAndRemoveColumns
+
+
+'Delete WS contents'
+ws.Cells.ClearContents
 
 'Activate Sheet2
 ThisWorkbook.Sheets("Sheet2").Activate
@@ -179,4 +210,22 @@ Sub SortAndRemoveColumns()
     ws2.Columns("J:J").ClearContents
 
 End Sub
+
+Function CalculateReceivedCredit(ws As Worksheet) As Double
+    Dim i As Long
+    Dim lastRow As Long
+    Dim sumCredit As Double
+    
+    'Find the last row in column B
+    lastRow = ws.Cells(ws.Rows.Count, 2).End(xlUp).Row
+    
+    'Loop through each row in column B
+    For i = 1 To lastRow
+        If ws.Cells(i, 2).Value = "RECEIVED_CREDIT" Then
+            sumCredit = sumCredit + ws.Cells(i, 1).Value 'Assuming the values to sum up are in Column A
+        End If
+    Next i
+    
+    CalculateReceivedCredit = sumCredit
+End Function
 
